@@ -1,3 +1,5 @@
+use std::thread::current;
+
 use nannou::prelude::*;
 use rand::rng;
 use rand_distr::{Distribution, Normal};
@@ -30,12 +32,19 @@ fn view(app: &App, _model: &Model) {
     let (w, h) = (window.w(), window.h());
 
     let normal = Normal::new(0.0_f32, UNIT * w).unwrap();
-    let seg: f32 = normal.sample(&mut rng());
+    let mut rng = rng();
+    let steps: Vec<f32> = (0..(w/UNIT).round() as i32)
+    .map(|_| normal.sample(&mut rng)).collect();
 
     draw.background().color(WHITE);
-    draw.line()
-        .start(pt2(-1.0 * (w / 2.0), 0.0))
-        .end(pt2(w / 2.0, seg))
-        .weight(3.0)
-        .color(BLACK);
+
+    let mut currentY = 0.0;
+    for (i, step) in steps.iter().enumerate() {
+        draw.line()
+            .start(pt2(i as f32 * UNIT - w / 2.0, currentY))
+            .end(pt2((i + 1) as f32 * UNIT - w / 2.0, currentY + *step))
+            .weight(3.0)
+            .color(BLACK);
+        currentY += step;
+    }
 }
